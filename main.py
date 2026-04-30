@@ -1,11 +1,17 @@
 import numpy as np 
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 df = pd.read_csv("ipl.csv")
 df.index = df.index + 1
 df.drop(columns=["team1_players","team2_players"])
 df["venue"] = df["venue"].str.split(",").str[0]
-df["venue"] = df["venue"].str.replace(".", "", regex=False)
+replace_map = {
+    "Feroz Shah Kotla": "Arun Jaitley Stadium",
+    "M.Chinnaswamy Stadium": "M Chinnaswamy Stadium",
+    "Punjab Cricket Association Stadium": "Punjab Cricket Association IS Bindra Stadium",
+    "Zayed Cricket Stadium": "Sheikh Zayed Stadium"}
+df["venue"] = df["venue"].replace(replace_map)
 
 def selectTeam(team):
     new_df = df[(df["team1"] == team) | (df["team2"] == team)]
@@ -40,11 +46,29 @@ def selectTeam(team):
     print("---------------------Games at each venue till 2025---------------------")
     print(venue_games)
     print("Most games at venue",venue_games.idxmax() ,venue_games.max())
-    print("Least games at venue",venue_games.idxmax(), venue_games.min())
-    plt.subplot(1,2,1)
+    print("---------------------Total wins and losses at each venue till 2025---------------------")
+    total_wl = new_df.groupby("venue")["result"].value_counts()
+    print(total_wl)
+    print("Most wins in at ",total_wl.unstack(fill_value = 0).sort_values(by = "won" ,ascending = False)["won"].head(1))
+    print("Most losses in at ",total_wl.unstack(fill_value = 0).sort_values(by = "lost" ,ascending = False)["lost"].head(1))
+    print("---------------------Total oss wins and losses at each venue till 2025---------------------")
+    total_wl_toss = new_df.groupby("venue")["toss_result"].value_counts()
+    print(total_wl_toss)
+    print("Most wins in at ",total_wl_toss.unstack(fill_value = 0).sort_values(by = "won" ,ascending = False)["won"].head(1))
+    print("Most losses in at ",total_wl_toss.unstack(fill_value = 0).sort_values(by = "lost" ,ascending = False)["lost"].head(1))
+    plt.subplot(2,2,1)
     plt.pie(data, labels = label)
-    plt.subplot(1,2,2)
+    plt.subplot(2,2,2)
     plt.pie(data2,labels=label2)
+    plt.subplot(2,2,3)
+    plt.figure(figsize=(18,7))
+    plt.xticks(fontsize = 8)
+    sns.barplot(
+        data = total_wl.reset_index(name = "count").head(4),
+        x ="venue",
+        y = "count",
+        hue = "result"
+    )
     plt.show()
     
 
